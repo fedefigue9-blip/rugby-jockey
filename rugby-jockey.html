@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Rugby Juvenil — Jockey Club Salta</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root{
+  --vp:#3D0000;--vo:#600000;--vm:#A00000;--vs:#C41A1A;
+  --vc:#E84040;--dor:#C41A1A;--dorc:#E84040;--dorfd:#FFF0F0;
+  --rojo:#A00000;--arena:#FFF5F5;--gc:#FFF0F0;--bl:#FFFFFF;
+  --txt:#1A0000;--txs:#6A2020;--somb:rgba(80,0,0,0.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Raleway',sans-serif;background:#F0E8E8;color:var(--txt);font-size:16px;min-height:100vh}
+h1,h2,h3,.cinzel{font-family:'Cinzel',serif;letter-spacing:.03em}
+
+/* LOADING */
+#ov-load{display:none;position:fixed;inset:0;background:rgba(60,0,0,.75);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:18px}
+#ov-load.open{display:flex}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+#ov-load p{color:#fff;font-size:15px;opacity:.85}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PANTALLAS */
+.pantalla{display:none}
+.pantalla.open{display:block}
+
+/* LOGIN */
+#s-login{min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--vp) 0%,#200000 100%)}
+#s-login.open{display:flex}
+.login-box{background:var(--bl);border-radius:20px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo h1{font-size:22px;color:var(--vm);line-height:1.3}
+.login-logo p{color:var(--txs);font-size:13px;margin-top:4px}
+.logo-rugby{width:64px;height:64px;background:var(--vm);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px}
+.lform label{display:block;font-size:13px;font-weight:600;color:var(--txs);margin-bottom:5px}
+.lform input{width:100%;padding:12px 14px;border:2px solid #D0DDD0;border-radius:10px;font-family:'Raleway',sans-serif;font-size:15px;color:var(--txt);background:#FAFDF9;transition:border-color .2s}
+.lform input:focus{outline:none;border-color:var(--vs)}
+.lform .campo{margin-bottom:16px}
+.err{color:var(--rojo);font-size:13px;margin-top:6px;min-height:18px}
+.btn-ppal{width:100%;padding:14px;background:var(--vm);color:#fff;border:none;border-radius:10px;font-family:'Cinzel',serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;letter-spacing:.05em;margin-top:4px}
+.btn-ppal:hover{background:var(--vs)}
+.btn-ppal.dor{background:var(--dor)}
+.btn-ppal.dor:hover{background:var(--dorc)}
+.llink{text-align:center;margin-top:16px;font-size:13px;color:var(--txs)}
+.llink a{color:var(--vs);cursor:pointer;font-weight:600}
+
+/* HEADER */
+header{background:linear-gradient(135deg,var(--vp) 0%,#500000 100%);padding:0 28px;height:68px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.h-izq{display:flex;align-items:center;gap:14px}
+.h-logo{width:42px;height:42px;background:rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(255,255,255,.2)}
+.h-tit h1{font-family:'Cinzel',serif;font-size:17px;color:#fff;letter-spacing:.04em;line-height:1.2}
+.h-tit p{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.03em}
+.h-der{display:flex;align-items:center;gap:10px}
+.h-user{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 14px;color:rgba(255,255,255,.85);font-size:13px;display:flex;align-items:center;gap:6px}
+.h-user .rol{background:rgba(255,255,255,0.9);color:var(--vp);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.04em}
+.btn-h{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 12px;color:rgba(255,255,255,.7);font-size:13px;cursor:pointer;transition:all .2s}
+.btn-h:hover{background:rgba(255,255,255,.15);color:#fff}
+
+/* NAV TABS */
+nav{background:var(--bl);border-bottom:2px solid #D0DDD0;display:flex;gap:0;overflow-x:auto}
+.ntab{padding:14px 22px;font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--txs);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:7px}
+.ntab:hover{color:var(--vm);background:#FFF0F0}
+.ntab.act{color:var(--vm);border-bottom-color:var(--vm);background:#FFF5F5}
+.ntab .icn{font-size:16px}
+
+/* MAIN */
+main{padding:24px 28px;max-width:1200px;margin:0 auto}
+.modulo{display:none}
+.modulo.open{display:block}
+
+/* SEMANA selector */
+.semana-bar{display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.semana-bar h2{font-size:18px;color:var(--vm)}
+.btn-sem{padding:7px 14px;border:2px solid var(--vm);border-radius:20px;background:#fff;color:var(--vm);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s}
+.btn-sem:hover{background:var(--vm);color:#fff}
+.btn-sem.act{background:var(--vm);color:#fff}
+.semana-nav{display:flex;align-items:center;gap:8px}
+.btn-nav{width:34px;height:34px;border-radius:50%;border:2px solid #D0DDD0;background:#fff;color:var(--vm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.btn-nav:hover{border-color:var(--vm);background:var(--vm);color:#fff}
+.semana-txt{font-size:15px;font-weight:600;color:var(--txt);min-width:220px;text-align:center}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.btn-acc{padding:9px 18px;border-radius:20px;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px;border:none}
+.btn-acc.verde{background:var(--vm);color:#fff}
+.btn-acc.verde:hover{background:var(--vs)}
+.btn-acc.dor{background:var(--dor);color:#fff}
+.btn-acc.dor:hover{background:var(--dorc)}
+.btn-acc.gris{background:#fff;color:var(--txs);border:2px solid #D0DDD0}
+.btn-acc.gris:hover{border-color:var(--vm);color:var(--vm)}
+.btn-acc.rojo{background:var(--rojo);color:#fff}
+.ml-auto{margin-left:auto}
+
+/* TABLA PARTIDOS */
+.tbl-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px var(--somb)}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--vo);color:#fff;padding:12px 14px;font-family:'Cinzel',serif;font-size:12px;font-weight:600;letter-spacing:.05em;text-align:left}
+tbody tr{border-bottom:1px solid #F5E8E8;transition:background .15s}
+tbody tr:hover{background:#FFF0F0}
+tbody td{padding:11px 14px;font-size:14px;vertical-align:middle}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;letter-spacing:.03em;gap:4px}
+.b-local{background:#FFD5D5;color:#7A0000}
+.b-visit{background:#FFF0D5;color:#7A4000}
+.b-confirm{background:#FFD5D5;color:#7A0000}
+.b-pend{background:#FFF0D5;color:#7A4000}
+.b-cambio{background:#FFE0E0;color:#5A0000}
+.b-division{background:#EEE8FF;color:#3A1A8B}
+.btn-ic{background:none;border:1px solid #D0DDD0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--txs);transition:all .2s}
+.btn-ic:hover{background:var(--vm);color:#fff;border-color:var(--vm)}
+.btn-ic.del:hover{background:var(--rojo);border-color:var(--rojo)}
+.empty{text-align:center;padding:48px;color:var(--txs);font-size:15px}
+
+/* MODALES */
+.overlay{display:none;position:fixed;inset:0;background:rgba(60,0,0,.6);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.modal.lg{max-width:820px}
+.mhead{background:linear-gradient(135deg,var(--vp),#500000);padding:22px 28px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between}
+.mhead h2{font-family:'Cinzel',serif;font-size:17px;color:#fff;font-weight:600}
+.mhead button{background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mhead button:hover{background:rgba(255,255,255,.25)}
+.mbody{padding:24px 28px}
+.mfooter{padding:14px 28px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #EAF0EA}
+.campo-m{margin-bottom:18px}
+.campo-m label{display:block;font-size:13px;font-weight:700;color:var(--txs);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.campo-m input,.campo-m select,.campo-m textarea{width:100%;padding:11px 14px;border:2px solid #D0DDD0;border-radius:10px;font-family:'Raleway',sans-serif;font-size:15px;color:var(--txt);background:#FAFDF9;transition:border-color .2s}
+.campo-m input:focus,.campo-m select:focus,.campo-m textarea:focus{outline:none;border-color:var(--vs)}
+.campo-m textarea{resize:vertical;min-height:80px}
+.fila-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fila-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.fila-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+
+/* Grupos de botones condicion/estado */
+.btn-grp{display:flex;gap:8px;flex-wrap:wrap}
+.btn-tog{padding:9px 16px;border:2px solid #D0DDD0;border-radius:10px;background:#fff;color:var(--txs);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s}
+.btn-tog.sel-local{background:#FFD5D5;border-color:#A00000;color:#7A0000}
+.btn-tog.sel-visita{background:#FFF0D5;border-color:#C4961A;color:#7A4000}
+.btn-tog.sel-confirm{background:#FFD5D5;border-color:#A00000;color:#7A0000}
+.btn-tog.sel-pend{background:#FFF0D5;border-color:#C4961A;color:#7A4000}
+.btn-tog.sel-cambio{background:#FFE0E0;border-color:#600000;color:#500000}
+
+/* CANCHAS */
+.canchas-grid{display:grid;gap:16px}
+.cancha-card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px var(--somb)}
+.cancha-header{background:var(--vm);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:10px}
+.cancha-header h3{font-family:'Cinzel',serif;font-size:14px;font-weight:600}
+.cancha-partidos table{width:100%}
+
+/* TERCER TIEMPO */
+.tt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.tt-card{background:#fff;border-radius:16px;padding:0;box-shadow:0 2px 14px var(--somb);overflow:hidden}
+.tt-card-head{background:linear-gradient(135deg,var(--vp),#500000);padding:16px 20px;color:#fff}
+.tt-card-head h3{font-family:'Cinzel',serif;font-size:15px;font-weight:600}
+.tt-card-head p{font-size:12px;opacity:.75;margin-top:3px}
+.tt-card-body{padding:18px 20px}
+.tt-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.tt-input-g label{display:block;font-size:11px;font-weight:700;color:var(--txs);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.tt-input-g input{width:100%;padding:9px 12px;border:2px solid #F0D0D0;border-radius:8px;font-size:15px;font-weight:600;color:var(--txt);text-align:center}
+.tt-input-g input:focus{outline:none;border-color:var(--vs)}
+.tt-personas{text-align:center;padding:10px;background:#FFF0F0;border-radius:10px;margin-bottom:14px}
+.tt-personas span{font-size:28px;font-weight:700;color:var(--vm)}
+.tt-personas p{font-size:12px;color:var(--txs)}
+.tt-insumos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.tt-ins-item{background:#FFF5F5;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px}
+.tt-ins-item .emo{font-size:18px}
+.tt-ins-item .info .nm{font-size:12px;color:var(--txs)}
+.tt-ins-item .info .cant{font-size:18px;font-weight:700;color:var(--vm)}
+.tt-hora-set{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid #EAF0EA}
+.tt-hora-set label{font-size:12px;font-weight:700;color:var(--txs);text-transform:uppercase}
+.tt-hora-set input{padding:7px 10px;border:2px solid #D0DDD0;border-radius:8px;font-size:14px;font-weight:600}
+.tt-hora-set input:focus{outline:none;border-color:var(--vs)}
+
+/* RESUMEN TT */
+.tt-resumen{background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 2px 14px var(--somb);margin-bottom:20px}
+.tt-resumen h3{font-family:'Cinzel',serif;font-size:16px;color:var(--vm);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #F5E8E8}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.res-item{text-align:center;padding:14px;background:#FFF5F5;border-radius:12px}
+.res-item .emo{font-size:24px;margin-bottom:4px}
+.res-item .cant{font-size:26px;font-weight:700;color:var(--vm)}
+.res-item .nm{font-size:12px;color:var(--txs);margin-top:2px}
+
+/* AVISOS */
+.avisos-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.atab{padding:9px 18px;border-radius:20px;border:2px solid #D0DDD0;background:#fff;color:var(--txs);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s}
+.atab.act{background:var(--vm);border-color:var(--vm);color:#fff}
+.aviso-panel{display:none}
+.aviso-panel.open{display:block}
+.aviso-card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 14px var(--somb)}
+.aviso-card h3{font-family:'Cinzel',serif;font-size:16px;color:var(--vm);margin-bottom:6px}
+.aviso-card p.sub{font-size:13px;color:var(--txs);margin-bottom:18px}
+.aviso-preview{background:#FFF5F5;border:1px solid #F0D0D0;border-radius:12px;padding:18px;font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:16px;color:var(--txt);min-height:80px;word-break:break-word}
+.aviso-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn-wa{background:#25D366;color:#fff;border:none;border-radius:20px;padding:10px 22px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .2s}
+.btn-wa:hover{background:#1da851}
+.btn-copy{background:#fff;border:2px solid #F0D0D0;border-radius:20px;padding:9px 18px;font-weight:600;font-size:13px;cursor:pointer;color:var(--txs);transition:all .2s}
+.btn-copy:hover{border-color:var(--vm);color:var(--vm)}
+.aviso-sin-tel{background:#FDF0DC;border:1px solid #C4961A;border-radius:10px;padding:12px 16px;font-size:13px;color:#8B5A00;margin-bottom:14px;display:none}
+.aviso-sin-tel.vis{display:block}
+.aviso-vacio{background:#FFF5F5;border-radius:12px;padding:32px;text-align:center;color:var(--txs);font-size:14px}
+
+/* CONFIG */
+.config-section{background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 14px var(--somb);margin-bottom:18px}
+.config-section h3{font-family:'Cinzel',serif;font-size:15px;color:var(--vm);margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #F5E8E8}
+.resp-list{display:flex;flex-direction:column;gap:10px}
+.resp-item{display:flex;align-items:center;gap:12px;background:#FFF5F5;border-radius:10px;padding:12px 14px}
+.resp-item .info{flex:1}
+.resp-item .info strong{font-size:15px;display:block}
+.resp-item .info span{font-size:12px;color:var(--txs)}
+.resp-item .info .tel{font-size:13px;color:var(--vm);font-weight:600;margin-top:2px}
+.param-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.param-item label{display:block;font-size:12px;font-weight:700;color:var(--txs);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}
+.param-item input{width:100%;padding:9px 12px;border:2px solid #D0DDD0;border-radius:8px;font-size:15px;font-weight:600;text-align:center}
+.param-item input:focus{outline:none;border-color:var(--vs)}
+.div-chips{display:flex;gap:8px;flex-wrap:wrap}
+.div-chip{padding:7px 14px;border-radius:20px;border:2px solid #D0DDD0;background:#fff;color:var(--txs);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s}
+.div-chip.sel{background:#FFD5D5;border-color:#A00000;color:#7A0000}
+.cancha-list{display:flex;flex-direction:column;gap:8px}
+.cancha-item{display:flex;align-items:center;gap:10px;background:#FFF5F5;border-radius:10px;padding:10px 14px}
+.cancha-item span{flex:1;font-size:15px;font-weight:600}
+.inp-add{display:flex;gap:8px;margin-top:10px}
+.inp-add input{flex:1;padding:10px 14px;border:2px solid #F0D0D0;border-radius:10px;font-size:15px}
+.inp-add input:focus{outline:none;border-color:var(--vs)}
+
+/* USUARIOS */
+.user-list{display:flex;flex-direction:column;gap:10px}
+.user-item{display:flex;align-items:center;gap:12px;background:#FFF5F5;border-radius:10px;padding:12px 14px}
+.user-avatar{width:40px;height:40px;border-radius:50%;background:var(--vm);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.user-info{flex:1}
+.user-info strong{display:block;font-size:15px}
+.user-info span{font-size:12px;color:var(--txs)}
+.rol-badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.rb-admin{background:#FFD5D5;color:#7A0000}
+.rb-colab{background:#EEE8FF;color:#3A1A8B}
+
+/* IA IMPORT */
+.ia-steps{display:flex;gap:0;margin-bottom:20px}
+.ia-step{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;color:var(--txs);border-bottom:3px solid #F0D0D0;position:relative}
+.ia-step.act{color:var(--vm);border-bottom-color:var(--vm)}
+.ia-step.done{color:var(--vs);border-bottom-color:var(--vs)}
+.ia-result{margin-top:16px}
+.ia-partido{background:#FFF0F0;border:1px solid #F0C0C0;border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+.ia-partido input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--vm)}
+.ia-partido .ia-info{flex:1}
+.ia-partido .ia-info strong{font-size:14px;display:block}
+.ia-partido .ia-info span{font-size:12px;color:var(--txs)}
+.ia-error{background:#FDDCDC;border:1px solid #E8B8B8;border-radius:10px;padding:12px 16px;font-size:13px;color:var(--rojo);margin-top:10px}
+
+/* Sección config API key */
+.api-key-section{background:#FDF5DC;border:1px solid #E8B830;border-radius:12px;padding:16px 18px}
+.api-key-section p{font-size:13px;color:#8B5A00;margin-bottom:10px}
+.api-key-section input{width:100%;padding:10px 12px;border:1px solid #D4A820;border-radius:8px;font-size:14px;font-family:monospace}
+
+/* FILTROS */
+.filtros-bar{background:#fff;border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 2px 8px var(--somb);display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.filtro-grupo{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.filtro-label{font-size:12px;font-weight:700;color:var(--txs);text-transform:uppercase;letter-spacing:.04em;margin-right:2px;white-space:nowrap}
+.fbtn{padding:5px 12px;border-radius:16px;border:2px solid #F0D0D0;background:#fff;color:var(--txs);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.fbtn:hover{border-color:var(--vm);color:var(--vm)}
+.fbtn.act{background:var(--vm);border-color:var(--vm);color:#fff}
+.fbtn-clear{padding:5px 12px;border-radius:16px;border:2px solid #F0D0D0;background:#fff;color:var(--txs);font-size:13px;font-weight:600;cursor:pointer;margin-left:auto;transition:all .2s}
+.fbtn-clear:hover{border-color:var(--rojo);color:var(--rojo)}
+.filtro-sep{width:1px;height:24px;background:#F0D0D0;margin:0 4px}
+
+/* RESPONSIVE */
+@media(max-width:620px){
+  main{padding:16px 14px}
+  .fila-2,.fila-3,.fila-4{grid-template-columns:1fr 1fr}
+  .fila-4{grid-template-columns:1fr 1fr}
+  thead th:nth-child(5),thead th:nth-child(6),tbody td:nth-child(5),tbody td:nth-child(6){display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="ov-load"><div class="spinner"></div><p>Cargando...</p></div>
+
+<!-- LOGIN -->
+<div id="s-login" class="pantalla">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-rugby">🏉</div>
+      <h1>JOCKEY CLUB SALTA</h1>
+      <p>Rugby Juvenil — Coordinación</p>
+    </div>
+    <div id="login-form" class="lform">
+      <div class="campo">
+        <label>Correo</label>
+        <input type="email" id="l-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="campo">
+        <label>Contraseña</label>
+        <input type="password" id="l-pass" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <p class="err" id="l-err"></p>
+      <button class="btn-ppal" onclick="login()">INGRESAR</button>
+      <div class="llink"><a onclick="mostrarReg()">¿Primera vez? Crear cuenta</a></div>
+    </div>
+    <div id="reg-form" class="lform" style="display:none">
+      <div class="campo">
+        <label>Nombre</label>
+        <input type="text" id="r-nom" placeholder="Tu nombre">
+      </div>
+      <div class="campo">
+        <label>Correo</label>
+        <input type="email" id="r-email" placeholder="tu@email.com">
+      </div>
+      <div class="campo">
+        <label>Contraseña</label>
+        <input type="password" id="r-pass" placeholder="Mínimo 6 caracteres">
+      </div>
+      <p class="err" id="r-err"></p>
+      <button class="btn-ppal dor" onclick="registrar()">CREAR CUENTA</button>
+      <div class="llink"><a onclick="mostrarLogin()">← Volver al login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="s-app" class="pantalla">
+  <header>
+    <div class="h-izq">
+      <div class="h-logo">🏉</div>
+      <div class="h-tit">
+        <h1>JOCKEY CLUB SALTA</h1>
+        <p>RUGBY JUVENIL — COORDINACIÓN</p>
+      </div>
+    </div>
+    <div class="h-der">
+      <div class="h-user">
+        <span id="h-nombre">—</span>
+        <span class="rol" id="h-rol">—</span>
+      </div>
+      <button class="btn-h" onclick="abrirPass()">🔑</button>
+      <button class="btn-h" onclick="cerrarSesion()">Salir</button>
+    </div>
+  </header>
+  <nav>
+    <div class="ntab act" onclick="irMod('m-fixture',this)"><span class="icn">📅</span> Fixture</div>
+    <div class="ntab" onclick="irMod('m-canchas',this)"><span class="icn">🏟️</span> Canchas</div>
+    <div class="ntab" onclick="irMod('m-tercer',this)"><span class="icn">🍕</span> 3er Tiempo</div>
+    <div class="ntab" onclick="irMod('m-avisos',this)"><span class="icn">📲</span> Avisos</div>
+    <div class="ntab" onclick="irMod('m-config',this)" id="tab-config"><span class="icn">⚙️</span> Config</div>
+  </nav>
+  <main>
+
+    <!-- FIXTURE -->
+    <div id="m-fixture" class="modulo open">
+      <div class="semana-bar">
+        <div class="semana-nav">
+          <button class="btn-nav" onclick="navSemana(-1)">‹</button>
+          <span class="semana-txt" id="sem-txt">—</span>
+          <button class="btn-nav" onclick="navSemana(1)">›</button>
+        </div>
+        <button class="btn-sem act" onclick="irSemanaActual()">Semana actual</button>
+      </div>
+      <div class="toolbar">
+        <button class="btn-acc verde" onclick="abrirModalPartido()">＋ Agregar partido</button>
+        <button class="btn-acc dor" onclick="abrirIA()">🤖 Importar con IA</button>
+      </div>
+      <!-- FILTROS -->
+      <div class="filtros-bar" id="filtros-bar">
+        <div class="filtro-grupo">
+          <span class="filtro-label">Condición:</span>
+          <button class="fbtn act" onclick="setFiltro('condicion','',this)">Todos</button>
+          <button class="fbtn" onclick="setFiltro('condicion','local',this)">🏠 Local</button>
+          <button class="fbtn" onclick="setFiltro('condicion','visita',this)">✈️ Visitante</button>
+        </div>
+        <div class="filtro-grupo">
+          <span class="filtro-label">Estado:</span>
+          <button class="fbtn act" onclick="setFiltro('estado','',this)">Todos</button>
+          <button class="fbtn" onclick="setFiltro('estado','confirmado',this)">✅ Confirmado</button>
+          <button class="fbtn" onclick="setFiltro('estado','pendiente',this)">⏳ Pendiente</button>
+          <button class="fbtn" onclick="setFiltro('estado','cambio',this)">🔄 Cambio</button>
+        </div>
+        <div class="filtro-grupo">
+          <span class="filtro-label">División:</span>
+          <button class="fbtn act" onclick="setFiltro('division','',this)">Todas</button>
+          <div id="filtros-div" style="display:contents"></div>
+        </div>
+        <button class="fbtn-clear" onclick="limpiarFiltros()">✕ Limpiar filtros</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>DIVISIÓN</th>
+              <th>RIVAL</th>
+              <th>FECHA</th>
+              <th>HORA</th>
+              <th>CANCHA</th>
+              <th>CONDICIÓN</th>
+              <th>ESTADO</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="fixture-tbody">
+            <tr><td colspan="8" class="empty">No hay partidos cargados para esta semana</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CANCHAS -->
+    <div id="m-canchas" class="modulo">
+      <div class="semana-bar">
+        <h2>Vista de Canchas</h2>
+        <span style="font-size:13px;color:var(--txs)">Solo partidos como local</span>
+      </div>
+      <div id="canchas-cont"><div class="empty" style="background:#fff;border-radius:14px;padding:48px">No hay partidos locales esta semana</div></div>
+    </div>
+
+    <!-- TERCER TIEMPO -->
+    <div id="m-tercer" class="modulo">
+      <div class="semana-bar">
+        <h2>Tercer Tiempo</h2>
+      </div>
+      <div class="tt-resumen" id="tt-resumen" style="display:none">
+        <h3>🧾 Totales de la jornada</h3>
+        <div class="res-grid" id="res-grid"></div>
+      </div>
+      <div class="tt-cards" id="tt-cards">
+        <div class="empty" style="background:#fff;border-radius:16px;padding:48px;width:100%">No hay partidos locales esta semana</div>
+      </div>
+    </div>
+
+    <!-- AVISOS -->
+    <div id="m-avisos" class="modulo">
+      <div class="semana-bar">
+        <h2>Avisos</h2>
+        <span style="font-size:13px;color:var(--txs)" id="avisos-semana-txt"></span>
+      </div>
+      <div class="avisos-tabs">
+        <div class="atab act" onclick="irAviso('av-gerente',this)">⭐ Gerente</div>
+        <div class="atab" onclick="irAviso('av-canchero',this)">🏟️ Canchero</div>
+        <div class="atab" onclick="irAviso('av-medico',this)">🩺 Médico</div>
+        <div class="atab" onclick="irAviso('av-ambulancia',this)">🚑 Ambulancia</div>
+        <div class="atab" onclick="irAviso('av-quincho',this)">🍕 Quincho</div>
+        <div class="atab" onclick="irAviso('av-club',this)">🏛️ Club</div>
+      </div>
+
+      <div id="av-gerente" class="aviso-panel open">
+        <div class="aviso-card">
+          <h3>Aviso para el Gerente</h3>
+          <p class="sub">Resumen completo de la jornada — canchas, horarios, médico, ambulancia y tercer tiempo</p>
+          <div class="aviso-sin-tel" id="st-gerente">⚠️ No hay número configurado para el Gerente. Ir a Configuración → Responsables.</div>
+          <div class="aviso-preview" id="prev-gerente"></div>
+          <div class="aviso-actions">
+            <button class="btn-wa" onclick="enviarWA('gerente')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Enviar por WhatsApp
+            </button>
+            <button class="btn-copy" onclick="copiarMensaje('prev-gerente')">📋 Copiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="av-canchero" class="aviso-panel">
+        <div class="aviso-card">
+          <h3>Aviso para el Canchero</h3>
+          <p class="sub">Informa canchas y horarios a preparar</p>
+          <div class="aviso-sin-tel" id="st-canchero">⚠️ No hay número de WhatsApp configurado para el canchero. Ir a Configuración → Responsables.</div>
+          <div class="aviso-preview" id="prev-canchero"></div>
+          <div class="aviso-actions">
+            <button class="btn-wa" onclick="enviarWA('canchero')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Enviar por WhatsApp
+            </button>
+            <button class="btn-copy" onclick="copiarMensaje('prev-canchero')">📋 Copiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="av-medico" class="aviso-panel">
+        <div class="aviso-card">
+          <h3>Aviso para el Médico</h3>
+          <p class="sub">Informa horarios de cobertura médica</p>
+          <div class="aviso-sin-tel" id="st-medico">⚠️ No hay número configurado para el médico.</div>
+          <div class="aviso-preview" id="prev-medico"></div>
+          <div class="aviso-actions">
+            <button class="btn-wa" onclick="enviarWA('medico')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Enviar por WhatsApp
+            </button>
+            <button class="btn-copy" onclick="copiarMensaje('prev-medico')">📋 Copiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="av-ambulancia" class="aviso-panel">
+        <div class="aviso-card">
+          <h3>Aviso para la Ambulancia</h3>
+          <p class="sub">Solicitud de cobertura de ambulancia</p>
+          <div class="aviso-sin-tel" id="st-ambulancia">⚠️ No hay número configurado para la ambulancia.</div>
+          <div class="aviso-preview" id="prev-ambulancia"></div>
+          <div class="aviso-actions">
+            <button class="btn-wa" onclick="enviarWA('ambulancia')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Enviar por WhatsApp
+            </button>
+            <button class="btn-copy" onclick="copiarMensaje('prev-ambulancia')">📋 Copiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="av-quincho" class="aviso-panel">
+        <div class="aviso-card">
+          <h3>Aviso para el Quincho</h3>
+          <p class="sub">Informa horarios de tercer tiempo e insumos necesarios</p>
+          <div class="aviso-sin-tel" id="st-quincho">⚠️ No hay número configurado para el quincho.</div>
+          <div class="aviso-preview" id="prev-quincho"></div>
+          <div class="aviso-actions">
+            <button class="btn-wa" onclick="enviarWA('quincho')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Enviar por WhatsApp
+            </button>
+            <button class="btn-copy" onclick="copiarMensaje('prev-quincho')">📋 Copiar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="av-club" class="aviso-panel">
+        <div class="aviso-card">
+          <h3>Aviso al Club</h3>
+          <p class="sub">Resumen general para la secretaría / encargado del club</p>
+          <div class="aviso-sin-tel" id="st-club">⚠️ No hay número configurado para el club.</div>
+          <div class="aviso-preview" id="prev-club"></div>
+          <div class="aviso-actions">
+            <button class="btn-wa" onclick="enviarWA('club')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Enviar por WhatsApp
+            </button>
+            <button class="btn-copy" onclick="copiarMensaje('prev-club')">📋 Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="m-config" class="modulo">
+      <div class="semana-bar"><h2>Configuración</h2></div>
+
+      <!-- Responsables -->
+      <div class="config-section">
+        <h3>👥 Responsables y contactos</h3>
+        <div class="resp-list" id="resp-list"></div>
+        <button class="btn-acc verde" style="margin-top:14px" onclick="abrirModalResp()">＋ Agregar responsable</button>
+      </div>
+
+      <!-- Canchas -->
+      <div class="config-section">
+        <h3>🏟️ Canchas del club</h3>
+        <div class="cancha-list" id="cancha-list"></div>
+        <div class="inp-add">
+          <input type="text" id="nueva-cancha" placeholder="Nombre de la cancha" onkeydown="if(event.key==='Enter')agregarCancha()">
+          <button class="btn-acc verde" onclick="agregarCancha()">＋ Agregar</button>
+        </div>
+      </div>
+
+      <!-- Divisiones -->
+      <div class="config-section">
+        <h3>🏉 Divisiones activas</h3>
+        <div class="div-chips" id="div-chips"></div>
+        <div class="inp-add" style="margin-top:12px">
+          <input type="text" id="nueva-div" placeholder="Nueva división (ej: M21)" onkeydown="if(event.key==='Enter')agregarDiv()">
+          <button class="btn-acc verde" onclick="agregarDiv()">＋ Agregar</button>
+        </div>
+      </div>
+
+      <!-- Tercer Tiempo parámetros -->
+      <div class="config-section">
+        <h3>🍕 Parámetros del Tercer Tiempo</h3>
+        <p style="font-size:13px;color:var(--txs);margin-bottom:16px">Cantidades por persona (salvo donde se indica)</p>
+        <div class="param-grid">
+          <div class="param-item"><label>🍺 Cervezas / staff</label><input type="number" step="0.1" id="p-cerveza" min="0"></div>
+          <div class="param-item"><label>🥤 Gaseosas / jugador</label><input type="number" step="0.1" id="p-gaseosa" min="0"></div>
+          <div class="param-item"><label>💧 Aguas staff (bot. fijas/partido)</label><input type="number" step="1" id="p-agua" min="0"></div>
+          <div class="param-item"><label>🌭 Choripanes / jugador</label><input type="number" step="0.1" id="p-chorip" min="0"></div>
+          <div class="param-item"><label>🍕 Staff por pizza</label><input type="number" step="1" id="p-pizza" min="1"></div>
+          <div class="param-item"><label>🥃 Vasos / jugador</label><input type="number" step="0.5" id="p-vasos" min="0"></div>
+          <div class="param-item"><label>💧 Aguas árbitro (bot. fijas/partido)</label><input type="number" step="1" id="p-aguaref" min="0"></div>
+          <div class="param-item"><label>⏱ Min. post-partido (TT)</label><input type="number" step="5" id="p-mintt" min="0"></div>
+        </div>
+        <button class="btn-acc verde" style="margin-top:16px" onclick="guardarParamsTT()">💾 Guardar parámetros</button>
+      </div>
+
+      <!-- API Key Anthropic -->
+      <div class="config-section">
+        <h3>🤖 IA — Importador de cronograma</h3>
+        <div class="api-key-section">
+          <p>Para usar el importador de cronograma con inteligencia artificial, ingresá tu API Key de Anthropic. Se guarda solo en este dispositivo (no en la nube).</p>
+          <input type="password" id="api-key-inp" placeholder="sk-ant-...">
+          <button class="btn-acc verde" style="margin-top:10px" onclick="guardarApiKey()">💾 Guardar API Key</button>
+          <span id="api-key-ok" style="margin-left:10px;font-size:13px;color:var(--vs);display:none">✅ Guardada</span>
+        </div>
+      </div>
+
+      <!-- Usuarios (solo admin) -->
+      <div class="config-section" id="sec-usuarios" style="display:none">
+        <h3>👤 Usuarios del sistema</h3>
+        <div class="user-list" id="user-list"></div>
+        <button class="btn-acc dor" style="margin-top:14px" onclick="abrirModalUsuario()">＋ Registrar usuario</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL PARTIDO -->
+<div class="overlay" id="ov-partido">
+  <div class="modal">
+    <div class="mhead">
+      <h2 id="mp-titulo">Nuevo partido</h2>
+      <button onclick="cerrarModal('ov-partido')">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="fila-2">
+        <div class="campo-m">
+          <label>División</label>
+          <select id="p-division"></select>
+        </div>
+        <div class="campo-m">
+          <label>Rival</label>
+          <input type="text" id="p-rival" placeholder="Nombre del equipo rival">
+        </div>
+      </div>
+      <div class="fila-3">
+        <div class="campo-m">
+          <label>Fecha</label>
+          <input type="date" id="p-fecha">
+        </div>
+        <div class="campo-m">
+          <label>Hora del partido</label>
+          <input type="time" id="p-hora">
+        </div>
+        <div class="campo-m">
+          <label>Cancha</label>
+          <select id="p-cancha"></select>
+        </div>
+      </div>
+      <div class="fila-2">
+        <div class="campo-m">
+          <label>Condición</label>
+          <div class="btn-grp">
+            <button class="btn-tog" id="bt-local" onclick="setCondicion('local')">🏠 Local</button>
+            <button class="btn-tog" id="bt-visita" onclick="setCondicion('visita')">✈️ Visitante</button>
+          </div>
+        </div>
+        <div class="campo-m">
+          <label>Estado</label>
+          <div class="btn-grp">
+            <button class="btn-tog" id="bt-confirm" onclick="setEstado('confirmado')">✅ Confirmado</button>
+            <button class="btn-tog" id="bt-pend" onclick="setPendiente()">⏳ Pendiente</button>
+            <button class="btn-tog" id="bt-cambio" onclick="setCambio()">🔄 Cambio</button>
+          </div>
+        </div>
+      </div>
+      <div id="sec-local" style="display:none;border:1px solid #D0DDD0;border-radius:12px;padding:16px;background:#F8FDF8">
+        <p style="font-size:13px;font-weight:700;color:var(--vm);margin-bottom:14px;text-transform:uppercase;letter-spacing:.04em">📊 Datos del partido local</p>
+        <div class="fila-4">
+          <div class="campo-m">
+            <label>Jugadores local</label>
+            <input type="number" id="p-jlocal" min="0" value="0">
+          </div>
+          <div class="campo-m">
+            <label>Jugadores visit.</label>
+            <input type="number" id="p-jvisit" min="0" value="0">
+          </div>
+          <div class="campo-m">
+            <label>Staff local</label>
+            <input type="number" id="p-slocal" min="0" value="0">
+          </div>
+          <div class="campo-m">
+            <label>Staff visit.</label>
+            <input type="number" id="p-svisit" min="0" value="0">
+          </div>
+        </div>
+        <div class="fila-2">
+          <div class="campo-m">
+            <label>Referís (cant.)</label>
+            <input type="number" id="p-referis" min="0" value="0">
+          </div>
+          <div class="campo-m">
+            <label>Hora 3er tiempo</label>
+            <input type="time" id="p-horatt">
+          </div>
+        </div>
+        <div class="campo-m">
+          <label>Notas del tercer tiempo</label>
+          <textarea id="p-notastt" placeholder="Ej: hay que pedir bebidas sin alcohol, veganos en el equipo visitante..."></textarea>
+        </div>
+      </div>
+      <input type="hidden" id="p-condicion" value="">
+      <input type="hidden" id="p-estado" value="confirmado">
+    </div>
+    <div class="mfooter">
+      <button class="btn-acc rojo" id="btn-del-partido" style="margin-right:auto;display:none" onclick="eliminarPartido()">🗑 Eliminar</button>
+      <button class="btn-acc gris" onclick="cerrarModal('ov-partido')">Cancelar</button>
+      <button class="btn-acc verde" onclick="guardarPartido()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IA -->
+<div class="overlay" id="ov-ia">
+  <div class="modal lg">
+    <div class="mhead">
+      <h2>🤖 Importar cronograma con IA</h2>
+      <button onclick="cerrarModal('ov-ia')">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="ia-steps">
+        <div class="ia-step act" id="ia-st1">1. Pegar texto</div>
+        <div class="ia-step" id="ia-st2">2. Procesar</div>
+        <div class="ia-step" id="ia-st3">3. Confirmar</div>
+      </div>
+      <div id="ia-paso1">
+        <p style="font-size:14px;color:var(--txs);margin-bottom:12px">Copiá el texto del PDF o Excel con el cronograma y pegalo acá. La IA detectará automáticamente los partidos.</p>
+        <div class="campo-m">
+          <label>Texto del cronograma</label>
+          <textarea id="ia-texto" style="min-height:180px;font-family:monospace;font-size:13px" placeholder="Pegar aquí el texto del cronograma..."></textarea>
+        </div>
+        <div class="campo-m">
+          <label>¿Cuál es la fecha del fin de semana? (para que la IA ubique bien los días)</label>
+          <input type="date" id="ia-fecha-ref">
+        </div>
+        <div id="ia-no-key" class="ia-error" style="display:none">⚠️ No hay API Key de Anthropic configurada. Ir a Configuración → IA para ingresarla.</div>
+      </div>
+      <div id="ia-paso2" style="display:none;text-align:center;padding:24px">
+        <div class="spinner" style="margin:0 auto 16px"></div>
+        <p style="color:var(--txs)">Analizando el cronograma...</p>
+      </div>
+      <div id="ia-paso3" style="display:none">
+        <p style="font-size:14px;color:var(--txs);margin-bottom:14px">Revisá los partidos detectados. Seleccioná los que querés importar:</p>
+        <div id="ia-result-list"></div>
+        <div id="ia-error-msg" class="ia-error" style="display:none"></div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn-acc gris" onclick="cerrarModal('ov-ia')">Cancelar</button>
+      <button class="btn-acc dor" id="btn-ia-procesar" onclick="procesarIA()">🤖 Procesar con IA</button>
+      <button class="btn-acc verde" id="btn-ia-importar" style="display:none" onclick="importarPartidos()">✅ Importar seleccionados</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESPONSABLE -->
+<div class="overlay" id="ov-resp">
+  <div class="modal">
+    <div class="mhead">
+      <h2 id="mr-titulo">Nuevo responsable</h2>
+      <button onclick="cerrarModal('ov-resp')">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="fila-2">
+        <div class="campo-m">
+          <label>Nombre</label>
+          <input type="text" id="resp-nombre" placeholder="Ej: Juan García">
+        </div>
+        <div class="campo-m">
+          <label>Cargo / Rol</label>
+          <select id="resp-tipo">
+            <option value="gerente">Gerente</option>
+            <option value="canchero">Canchero</option>
+            <option value="medico">Médico</option>
+            <option value="ambulancia">Ambulancia</option>
+            <option value="quincho">Quincho / Concesionario</option>
+            <option value="club">Club (Secretaría)</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="campo-m">
+        <label>Número de WhatsApp (con código de país, sin +)</label>
+        <input type="text" id="resp-tel" placeholder="Ej: 5493874123456">
+      </div>
+      <p style="font-size:12px;color:var(--txs);margin-top:4px">Argentina: 549 + código de área + número (sin el 15). Ej: Salta 0387 → 5493874123456</p>
+    </div>
+    <div class="mfooter">
+      <button class="btn-acc rojo" id="btn-del-resp" style="margin-right:auto;display:none" onclick="eliminarResp()">🗑 Eliminar</button>
+      <button class="btn-acc gris" onclick="cerrarModal('ov-resp')">Cancelar</button>
+      <button class="btn-acc verde" onclick="guardarResp()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="overlay" id="ov-usuario">
+  <div class="modal">
+    <div class="mhead">
+      <h2>Registrar nuevo usuario</h2>
+      <button onclick="cerrarModal('ov-usuario')">✕</button>
+    </div>
+    <div class="mbody">
+      <p style="font-size:14px;color:var(--txs);margin-bottom:16px">Registrá colaboradores que también podrán editar el fixture.</p>
+      <div class="campo-m"><label>Nombre</label><input type="text" id="u-nom" placeholder="Nombre completo"></div>
+      <div class="campo-m"><label>Email</label><input type="email" id="u-email" placeholder="email@ejemplo.com"></div>
+      <div class="campo-m"><label>Contraseña temporal</label><input type="password" id="u-pass" value="Rugby2025" placeholder="Mínimo 6 caracteres"></div>
+      <div class="campo-m">
+        <label>Rol</label>
+        <div class="btn-grp">
+          <button class="btn-tog" id="bu-admin" onclick="setRolUsuario('admin')">⭐ Admin</button>
+          <button class="btn-tog sel-confirm" id="bu-colab" onclick="setRolUsuario('colaborador')">👤 Colaborador</button>
+        </div>
+      </div>
+      <input type="hidden" id="u-rol" value="colaborador">
+      <p class="err" id="u-err"></p>
+    </div>
+    <div class="mfooter">
+      <button class="btn-acc gris" onclick="cerrarModal('ov-usuario')">Cancelar</button>
+      <button class="btn-acc verde" onclick="registrarUsuario()">✅ Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTRASEÑA -->
+<div class="overlay" id="ov-pass">
+  <div class="modal">
+    <div class="mhead">
+      <h2>Cambiar contraseña</h2>
+      <button onclick="cerrarModal('ov-pass')">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="campo-m"><label>Contraseña actual</label><input type="password" id="pass-actual"></div>
+      <div class="campo-m"><label>Nueva contraseña</label><input type="password" id="pass-nueva"></div>
+      <div class="campo-m"><label>Confirmar nueva</label><input type="password" id="pass-conf"></div>
+      <p class="err" id="pass-err"></p>
+      <p style="color:var(--vs);font-size:13px;display:none" id="pass-ok">✅ Contraseña actualizada</p>
+    </div>
+    <div class="mfooter">
+      <button class="btn-acc gris" onclick="cerrarModal('ov-pass')">Cancelar</button>
+      <button class="btn-acc verde" onclick="cambiarContrasena()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== CONFIG FIREBASE ====================
+// ⚠️ REEMPLAZAR estos valores con los de tu proyecto Firebase
+const APP_CONFIG = {
+  apiKey: "AIzaSyALl70rXi-lbmW2S2T9dyHhnDBPdh2oG5U",
+  authDomain: "rugby-jockey-salta.firebaseapp.com",
+  projectId: "rugby-jockey-salta",
+  storageBucket: "rugby-jockey-salta.firebasestorage.app",
+  messagingSenderId: "22617174254",
+  appId: "1:22617174254:web:9ceec3b2925b0184fb43ff"
+};
+
+// ==================== GLOBALS ====================
+let db, auth, authSub = null;
+let userData = null;
+let appIniciada = false;
+let semanaId = ''; // ISO del lunes (YYYY-MM-DD)
+let partidos = [];
+let configApp = { responsables: [], canchas: ['Cancha 1', 'Cancha 2'], divisiones: ['M15','M16','M17','M19','Infantiles','Pre-Intermedia','Plantel Superior'] };
+let configTT = { cerveza:1.5, gaseosa:0.5, agua:4, chorip:1.2, pizza:3, vasos:3, aguaReferis:2, minTT:80 };
+let partidoEditId = null;
+let respEditId = null;
+let iaPartidosDetectados = [];
+let particidosSub = null;
+let usuariosSub = null;
+
+const $ = id => document.getElementById(id);
+const loading = on => $('ov-load').classList[on?'add':'remove']('open');
+function pantalla(id){ document.querySelectorAll('.pantalla').forEach(p=>p.classList.remove('open')); $(id).classList.add('open'); }
+function cerrarModal(id){ $(id).classList.remove('open'); }
+
+// ==================== FIREBASE INIT ====================
+function initFB(cfg){
+  if(!firebase.apps.length) firebase.initializeApp(cfg);
+  db   = firebase.firestore();
+  auth = firebase.auth();
+  authSub = auth.onAuthStateChanged(async user=>{
+    if(appIniciada) return;
+    if(user){
+      await cargarUsuarioActual(user);
+      loading(false);
+      iniciarApp();
+    } else {
+      loading(false);
+      pantalla('s-login');
+    }
+  });
+}
+window.addEventListener('load',()=>{ loading(true); initFB(APP_CONFIG); });
+
+// ==================== AUTH ====================
+async function cargarUsuarioActual(user){
+  try{
+    const tOut = new Promise((_,rej)=>setTimeout(()=>rej('timeout'),5000));
+    const snap = await Promise.race([db.collection('usuarios').doc(user.uid).get(), tOut]);
+    if(snap.exists){ userData=snap.data(); return; }
+    const q = await Promise.race([db.collection('usuarios').where('email','==',user.email).limit(1).get(), new Promise((_,rej)=>setTimeout(()=>rej('timeout'),5000))]);
+    if(!q.empty){ userData=q.docs[0].data(); db.collection('usuarios').doc(user.uid).set(userData).catch(()=>{}); }
+    else{ userData={nombre:user.email.split('@')[0],rol:'colaborador',email:user.email}; }
+  }catch(e){
+    userData={nombre:user.displayName||user.email.split('@')[0],rol:'colaborador',email:user.email};
+  }
+}
+async function login(){
+  const email=$('l-email').value.trim(), pass=$('l-pass').value;
+  if(!email||!pass){$('l-err').textContent='Completá todos los campos';return;}
+  $('l-err').textContent='⏳ Conectando...';
+  loading(true);
+  try{
+    $('l-err').textContent='⏳ Verificando credenciales...';
+    const cred = await auth.signInWithEmailAndPassword(email,pass);
+    $('l-err').textContent='⏳ Cargando perfil...';
+    appIniciada = true;
+    await cargarUsuarioActual(cred.user);
+    $('l-err').textContent='✅ OK, abriendo...';
+    loading(false);
+    iniciarApp();
+  }
+  catch(e){
+    loading(false);
+    const msg = tradErr(e.code) || e.message || e.code || 'Error desconocido';
+    $('l-err').textContent = '❌ ' + msg;
+  }
+}
+async function registrar(){
+  const nom=$('r-nom').value.trim(),email=$('r-email').value.trim(),pass=$('r-pass').value;
+  if(!nom||!email||!pass){$('r-err').textContent='Completá todos los campos';return;}
+  if(pass.length<6){$('r-err').textContent='Mínimo 6 caracteres';return;}
+  loading(true); $('r-err').textContent='';
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pass);
+    let esAdmin=false;
+    try{ const c=await db.collection('usuarios').get(); esAdmin=c.empty; }catch(_){}
+    const rol=esAdmin?'admin':'colaborador';
+    const nuevoUser={nombre:nom,email,rol,creadoEn:new Date().toISOString()};
+    try{ await db.collection('usuarios').doc(cred.user.uid).set(nuevoUser); }catch(_){}
+    appIniciada=true;
+    userData=nuevoUser;
+    loading(false);
+    iniciarApp();
+  }catch(e){ loading(false); $('r-err').textContent=tradErr(e.code); }
+}
+function mostrarReg(){ $('login-form').style.display='none'; $('reg-form').style.display='block'; }
+function mostrarLogin(){ $('reg-form').style.display='none'; $('login-form').style.display='block'; }
+function cerrarSesion(){ appIniciada=false; userData=null; auth.signOut(); }
+function tradErr(c){ return {'auth/wrong-password':'Contraseña incorrecta','auth/invalid-credential':'Correo o contraseña incorrectos','auth/user-not-found':'Usuario no encontrado','auth/email-already-in-use':'El correo ya está registrado','auth/weak-password':'Mínimo 6 caracteres','auth/invalid-email':'Correo inválido','auth/too-many-requests':'Demasiados intentos. Esperá unos minutos.'}[c]||'Error: '+c; }
+
+// ==================== INICIO APP ====================
+function iniciarApp(){
+  pantalla('s-app');
+  $('h-nombre').textContent = userData.nombre;
+  $('h-rol').textContent = userData.rol==='admin'?'ADMIN':'COLABORADOR';
+  if(userData.rol==='admin'){ $('sec-usuarios').style.display='block'; }
+  $('tab-config').style.display = userData.rol==='admin'?'flex':'flex'; // todos ven config básica
+  semanaId = getLunes(new Date());
+  actualizarTextoSemana();
+  cargarConfig();
+  cargarPartidos();
+  cargarUsuarios();
+}
+
+// ==================== SEMANA ====================
+function getLunes(d){
+  const dt=new Date(d); dt.setHours(0,0,0,0);
+  const day=dt.getDay(); const diff=day===0?-6:1-day;
+  dt.setDate(dt.getDate()+diff);
+  return dt.toISOString().split('T')[0];
+}
+function navSemana(dir){
+  const dt=new Date(semanaId+'T12:00:00');
+  dt.setDate(dt.getDate()+dir*7);
+  semanaId=dt.toISOString().split('T')[0];
+  actualizarTextoSemana();
+  cargarPartidos();
+}
+function irSemanaActual(){
+  semanaId=getLunes(new Date());
+  actualizarTextoSemana();
+  cargarPartidos();
+}
+function actualizarTextoSemana(){
+  const lun=new Date(semanaId+'T12:00:00');
+  const vie=new Date(lun); vie.setDate(vie.getDate()+6);
+  $('sem-txt').textContent='Semana '+fmtFechaCorta(lun)+' – '+fmtFechaCorta(vie);
+}
+
+// ==================== CONFIG ====================
+async function cargarConfig(){
+  try{
+    const snap=await db.collection('config').doc('app').get();
+    if(snap.exists) configApp={...configApp,...snap.data()};
+  }catch(e){}
+  try{
+    const snap=await db.collection('config').doc('tercer_tiempo').get();
+    if(snap.exists) configTT={...configTT,...snap.data()};
+  }catch(e){}
+  renderConfig();
+}
+async function guardarConfig(){
+  try{ await db.collection('config').doc('app').set(configApp); }catch(e){}
+}
+async function guardarParamsTT(){
+  configTT.cerveza=parseFloat($('p-cerveza').value)||1.5;
+  configTT.gaseosa=parseFloat($('p-gaseosa').value)||0.5;
+  configTT.agua=parseFloat($('p-agua').value)||0.5;
+  configTT.chorip=parseFloat($('p-chorip').value)||1.2;
+  configTT.pizza=parseInt($('p-pizza').value)||4;
+  configTT.vasos=parseFloat($('p-vasos').value)||3;
+  configTT.aguaReferis=parseInt($('p-aguaref').value)||6;
+  configTT.minTT=parseInt($('p-mintt').value)||80;
+  try{
+    await db.collection('config').doc('tercer_tiempo').set(configTT);
+    alert('✅ Parámetros guardados');
+    renderTercerTiempo();
+  }catch(e){ alert('Error al guardar: '+e.message); }
+}
+
+function renderConfig(){
+  // Parámetros TT
+  $('p-cerveza').value=configTT.cerveza??1.5;
+  $('p-gaseosa').value=configTT.gaseosa??0.5;
+  $('p-agua').value=configTT.agua??0.5;
+  $('p-chorip').value=configTT.chorip??1.2;
+  $('p-pizza').value=configTT.pizza??4;
+  $('p-vasos').value=configTT.vasos??3;
+  $('p-aguaref').value=configTT.aguaReferis??6;
+  $('p-mintt').value=configTT.minTT??80;
+
+  // Responsables
+  const rl=$('resp-list'); rl.innerHTML='';
+  if(!configApp.responsables||!configApp.responsables.length){
+    rl.innerHTML='<p style="color:var(--txs);font-size:14px">Todavía no hay responsables cargados.</p>';
+  } else {
+    configApp.responsables.forEach((r,i)=>{
+      rl.innerHTML+=`<div class="resp-item">
+        <div class="info">
+          <strong>${r.nombre}</strong>
+          <span>${labelTipo(r.tipo)}</span>
+          <span class="tel">${r.tel?'📱 '+r.tel:'Sin número'}</span>
+        </div>
+        <button class="btn-ic" onclick="editarResp(${i})">✏️ Editar</button>
+      </div>`;
+    });
+  }
+
+  // Canchas
+  const cl=$('cancha-list'); cl.innerHTML='';
+  (configApp.canchas||[]).forEach((c,i)=>{
+    cl.innerHTML+=`<div class="cancha-item"><span>🏟️ ${c}</span><button class="btn-ic del" onclick="quitarCancha(${i})">✕</button></div>`;
+  });
+
+  // Divisiones
+  const dc=$('div-chips'); dc.innerHTML='';
+  const DIVS_DEFAULT=['M15','M16','M17','M19','Infantiles','Pre-Intermedia','Plantel Superior'];
+  const todas=[...new Set([...DIVS_DEFAULT,...(configApp.divisiones||[])])];
+  todas.forEach(d=>{
+    const sel=(configApp.divisiones||[]).includes(d);
+    dc.innerHTML+=`<div class="div-chip ${sel?'sel':''}" onclick="toggleDiv('${d}',this)">${d}</div>`;
+  });
+
+  // API key
+  const k=localStorage.getItem('anthropic_key')||'';
+  if(k) $('api-key-inp').value='••••••••••••'+k.slice(-6);
+
+  // Select divisiones en modal partido
+  const sd=$('p-division'); sd.innerHTML='';
+  (configApp.divisiones||DIVS_DEFAULT).forEach(d=>{ sd.innerHTML+=`<option>${d}</option>`; });
+
+  // Select canchas en modal partido
+  const sc=$('p-cancha'); sc.innerHTML='<option value="">— Sin asignar —</option>';
+  (configApp.canchas||[]).forEach(c=>{ sc.innerHTML+=`<option>${c}</option>`; });
+}
+
+function labelTipo(t){
+  return {gerente:'Gerente',canchero:'Canchero',medico:'Médico',ambulancia:'Ambulancia',quincho:'Quincho / Concesionario',club:'Club (Secretaría)',otro:'Otro'}[t]||t;
+}
+
+// Canchas
+async function agregarCancha(){
+  const v=$('nueva-cancha').value.trim();
+  if(!v) return;
+  if(!configApp.canchas) configApp.canchas=[];
+  configApp.canchas.push(v);
+  $('nueva-cancha').value='';
+  await guardarConfig(); renderConfig(); renderCanchas(); renderFixture();
+}
+async function quitarCancha(i){
+  configApp.canchas.splice(i,1);
+  await guardarConfig(); renderConfig();
+}
+
+// Divisiones
+async function toggleDiv(d,el){
+  if(!configApp.divisiones) configApp.divisiones=[];
+  const idx=configApp.divisiones.indexOf(d);
+  if(idx===-1){ configApp.divisiones.push(d); el.classList.add('sel'); }
+  else{ configApp.divisiones.splice(idx,1); el.classList.remove('sel'); }
+  await guardarConfig(); renderConfig();
+}
+async function agregarDiv(){
+  const v=$('nueva-div').value.trim();
+  if(!v) return;
+  if(!configApp.divisiones) configApp.divisiones=[];
+  if(!configApp.divisiones.includes(v)) configApp.divisiones.push(v);
+  $('nueva-div').value='';
+  await guardarConfig(); renderConfig();
+}
+
+// Responsables
+function abrirModalResp(){ respEditId=null; $('mr-titulo').textContent='Nuevo responsable'; $('resp-nombre').value=''; $('resp-tipo').value='canchero'; $('resp-tel').value=''; $('btn-del-resp').style.display='none'; $('ov-resp').classList.add('open'); }
+function editarResp(i){ respEditId=i; const r=configApp.responsables[i]; $('mr-titulo').textContent='Editar responsable'; $('resp-nombre').value=r.nombre; $('resp-tipo').value=r.tipo; $('resp-tel').value=r.tel||''; $('btn-del-resp').style.display='block'; $('ov-resp').classList.add('open'); }
+async function guardarResp(){
+  const r={nombre:$('resp-nombre').value.trim(),tipo:$('resp-tipo').value,tel:$('resp-tel').value.replace(/[\s\-\+]/g,'')};
+  if(!r.nombre){alert('El nombre es obligatorio');return;}
+  if(!configApp.responsables) configApp.responsables=[];
+  if(respEditId!==null) configApp.responsables[respEditId]=r; else configApp.responsables.push(r);
+  await guardarConfig(); renderConfig(); cerrarModal('ov-resp');
+  renderAvisos();
+}
+async function eliminarResp(){
+  if(!confirm('¿Eliminar este responsable?'))return;
+  configApp.responsables.splice(respEditId,1);
+  await guardarConfig(); renderConfig(); cerrarModal('ov-resp'); renderAvisos();
+}
+
+// API Key
+function guardarApiKey(){
+  const k=$('api-key-inp').value.trim();
+  if(k.startsWith('sk-ant')){ localStorage.setItem('anthropic_key',k); $('api-key-ok').style.display='inline'; setTimeout(()=>$('api-key-ok').style.display='none',2000); }
+  else{ alert('La API Key debe comenzar con "sk-ant-..."'); }
+}
+
+// ==================== PARTIDOS ====================
+function cargarPartidos(){
+  if(particidosSub) particidosSub();
+  particidosSub=db.collection('partidos').where('semanaId','==',semanaId).onSnapshot(snap=>{
+    partidos=snap.docs.map(d=>({id:d.id,...d.data()}));
+    partidos.sort((a,b)=>{ const f=a.fecha.localeCompare(b.fecha); return f||a.hora.localeCompare(b.hora); });
+    renderFixture();
+    renderCanchas();
+    renderTercerTiempo();
+    renderAvisos();
+    loading(false);
+  },()=>loading(false));
+}
+
+async function guardarPartido(){
+  const div=$('p-division').value;
+  const rival=$('p-rival').value.trim();
+  const fecha=$('p-fecha').value;
+  const hora=$('p-hora').value;
+  const condicion=$('p-condicion').value;
+  const estado=$('p-estado').value;
+  if(!rival){alert('El rival es obligatorio');return;}
+  if(!fecha){alert('La fecha es obligatoria');return;}
+  if(!hora){alert('La hora es obligatoria');return;}
+  if(!condicion){alert('Seleccioná la condición (local/visitante)');return;}
+
+  const data={
+    semanaId, division:div, rival, fecha, hora,
+    cancha:$('p-cancha').value||'',
+    condicion, estado,
+    creadoEn: partidoEditId ? undefined : new Date().toISOString(),
+    actualizadoEn: new Date().toISOString()
+  };
+  if(condicion==='local'){
+    data.jugadoresLocal=parseInt($('p-jlocal').value)||0;
+    data.jugadoresVisitante=parseInt($('p-jvisit').value)||0;
+    data.staffLocal=parseInt($('p-slocal').value)||0;
+    data.staffVisitante=parseInt($('p-svisit').value)||0;
+    data.referis=parseInt($('p-referis').value)||0;
+    data.horaTT=$('p-horatt').value||calcHoraTT(hora);
+    data.notasTT=$('p-notastt').value.trim();
+  }
+  if(!data.creadoEn) delete data.creadoEn;
+
+  loading(true);
+  try{
+    if(partidoEditId){ await db.collection('partidos').doc(partidoEditId).update(data); }
+    else{ await db.collection('partidos').add(data); }
+    cerrarModal('ov-partido');
+  }catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+async function eliminarPartido(){
+  if(!confirm('¿Eliminar este partido?'))return;
+  loading(true);
+  try{ await db.collection('partidos').doc(partidoEditId).delete(); cerrarModal('ov-partido'); }
+  catch(e){ loading(false); alert('Error: '+e.message); }
+}
+
+function calcHoraTT(horaPartido){
+  if(!horaPartido) return '';
+  const [h,m]=horaPartido.split(':').map(Number);
+  const mins=h*60+m+(configTT.minTT||80);
+  return String(Math.floor(mins/60)).padStart(2,'0')+':'+String(mins%60).padStart(2,'0');
+}
+
+// ==================== MODAL PARTIDO ====================
+function abrirModalPartido(id=null){
+  partidoEditId=id;
+  $('mp-titulo').textContent=id?'Editar partido':'Nuevo partido';
+  $('btn-del-partido').style.display=id?'block':'none';
+  $('sec-local').style.display='none';
+  $('p-condicion').value='';
+  $('p-estado').value='confirmado';
+  document.querySelectorAll('#ov-partido .btn-tog').forEach(b=>{ b.className='btn-tog'; });
+  $('bt-confirm').className='btn-tog sel-confirm';
+  $('p-notastt').value='';
+
+  if(id){
+    const p=partidos.find(x=>x.id===id);
+    if(p){
+      $('p-division').value=p.division||'';
+      $('p-rival').value=p.rival||'';
+      $('p-fecha').value=p.fecha||'';
+      $('p-hora').value=p.hora||'';
+      $('p-cancha').value=p.cancha||'';
+      setCondicion(p.condicion);
+      if(p.estado==='pendiente') setPendiente(); else if(p.estado==='cambio') setCambio(); else setEstadoBtn('confirmado');
+      if(p.condicion==='local'){
+        $('p-jlocal').value=p.jugadoresLocal||0;
+        $('p-jvisit').value=p.jugadoresVisitante||0;
+        $('p-slocal').value=p.staffLocal||0;
+        $('p-svisit').value=p.staffVisitante||0;
+        $('p-referis').value=p.referis||0;
+        $('p-horatt').value=p.horaTT||'';
+        $('p-notastt').value=p.notasTT||'';
+      }
+    }
+  } else {
+    $('p-division').value=''; $('p-rival').value=''; $('p-hora').value='';
+    $('p-cancha').value='';
+    const fds=proximoSabado();
+    $('p-fecha').value=fds;
+    $('p-jlocal').value=0; $('p-jvisit').value=0; $('p-slocal').value=0; $('p-svisit').value=0; $('p-referis').value=0; $('p-horatt').value='';
+    setEstadoBtn('confirmado');
+  }
+  $('ov-partido').classList.add('open');
+}
+function proximoSabado(){
+  const d=new Date(); const day=d.getDay();
+  const diff=day<=6?6-day:0;
+  d.setDate(d.getDate()+diff);
+  return d.toISOString().split('T')[0];
+}
+function setCondicion(v){
+  $('p-condicion').value=v;
+  $('bt-local').className='btn-tog'+(v==='local'?' sel-local':'');
+  $('bt-visita').className='btn-tog'+(v==='visita'?' sel-visita':'');
+  $('sec-local').style.display=v==='local'?'block':'none';
+  if(v==='local'&&!$('p-horatt').value){
+    $('p-horatt').value=calcHoraTT($('p-hora').value);
+  }
+}
+function setEstadoBtn(v){
+  $('p-estado').value=v;
+  $('bt-confirm').className='btn-tog'+(v==='confirmado'?' sel-confirm':'');
+  $('bt-pend').className='btn-tog'+(v==='pendiente'?' sel-pend':'');
+  $('bt-cambio').className='btn-tog'+(v==='cambio'?' sel-cambio':'');
+}
+function setEstado(v){ setEstadoBtn(v); }
+function setPendiente(){ setEstadoBtn('pendiente'); }
+function setCambio(){ setEstadoBtn('cambio'); }
+
+let filtros = { condicion:'', estado:'', division:'' };
+
+function setFiltro(tipo, valor, el){
+  filtros[tipo] = valor;
+  // actualizar botones activos del grupo
+  el.closest('.filtro-grupo').querySelectorAll('.fbtn').forEach(b=>b.classList.remove('act'));
+  el.classList.add('act');
+  renderFixture();
+}
+
+function limpiarFiltros(){
+  filtros = { condicion:'', estado:'', division:'' };
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('act'));
+  document.querySelectorAll('.filtro-grupo').forEach(g=>{
+    const primero=g.querySelector('.fbtn');
+    if(primero) primero.classList.add('act');
+  });
+  renderFixture();
+}
+
+function renderFiltrosDivisiones(){
+  const divs=[...new Set(partidos.map(p=>p.division).filter(Boolean))].sort();
+  const cont=$('filtros-div');
+  if(!cont) return;
+  cont.innerHTML=divs.map(d=>`<button class="fbtn${filtros.division===d?' act':''}" onclick="setFiltro('division','${d}',this)">${d}</button>`).join('');
+}
+
+// ==================== RENDER FIXTURE ====================
+function renderFixture(){
+  renderFiltrosDivisiones();
+  let lista = partidos;
+  if(filtros.condicion) lista = lista.filter(p=>p.condicion===filtros.condicion);
+  if(filtros.estado)    lista = lista.filter(p=>p.estado===filtros.estado);
+  if(filtros.division)  lista = lista.filter(p=>p.division===filtros.division);
+  const tbody=$('fixture-tbody');
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="8" class="empty">${partidos.length?'No hay partidos con esos filtros':'No hay partidos cargados para esta semana'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=lista.map(p=>`
+    <tr>
+      <td><span class="badge b-division">${p.division}</span></td>
+      <td style="font-weight:600">${p.rival}</td>
+      <td>${fmtFechaLarga(p.fecha)}</td>
+      <td>⏰ ${p.hora}</td>
+      <td>${p.cancha||'—'}</td>
+      <td><span class="badge ${p.condicion==='local'?'b-local':'b-visit'}">${p.condicion==='local'?'🏠 Local':'✈️ Visitante'}</span></td>
+      <td><span class="badge ${p.estado==='confirmado'?'b-confirm':p.estado==='cambio'?'b-cambio':'b-pend'}">${estadoLabel(p.estado)}</span></td>
+      <td><button class="btn-ic" onclick="abrirModalPartido('${p.id}')">✏️ Editar</button></td>
+    </tr>`).join('');
+}
+function estadoLabel(e){ return {confirmado:'✅ Confirmado',pendiente:'⏳ Pendiente',cambio:'🔄 Cambio'}[e]||e; }
+
+// ==================== RENDER CANCHAS ====================
+function renderCanchas(){
+  const locales=partidos.filter(p=>p.condicion==='local').sort((a,b)=>a.hora.localeCompare(b.hora));
+  const cont=$('canchas-cont');
+  if(!locales.length){
+    cont.innerHTML='<div class="empty" style="background:#fff;border-radius:14px;padding:48px">No hay partidos locales esta semana</div>';
+    return;
+  }
+  const porCancha={};
+  locales.forEach(p=>{
+    const c=p.cancha||'Sin asignar';
+    if(!porCancha[c]) porCancha[c]=[];
+    porCancha[c].push(p);
+  });
+  cont.innerHTML='<div class="canchas-grid">'+
+    Object.entries(porCancha).map(([cancha,ps])=>`
+      <div class="cancha-card">
+        <div class="cancha-header"><h3>🏟️ ${cancha}</h3></div>
+        <table>
+          <thead><tr><th>HORA</th><th>DIVISIÓN</th><th>RIVAL</th><th>ESTADO</th><th>TT</th></tr></thead>
+          <tbody>${ps.map(p=>`
+            <tr>
+              <td>⏰ ${p.hora}</td>
+              <td><span class="badge b-division">${p.division}</span></td>
+              <td style="font-weight:600">${p.rival}</td>
+              <td><span class="badge ${p.estado==='confirmado'?'b-confirm':p.estado==='cambio'?'b-cambio':'b-pend'}">${estadoLabel(p.estado)}</span></td>
+              <td>${p.horaTT?'🍕 '+p.horaTT:'—'}</td>
+            </tr>`).join('')}</tbody>
+        </table>
+      </div>`).join('')+
+  '</div>';
+}
+
+// ==================== RENDER TERCER TIEMPO ====================
+function renderTercerTiempo(){
+  const locales=partidos.filter(p=>p.condicion==='local').sort((a,b)=>a.hora.localeCompare(b.hora));
+  const cards=$('tt-cards');
+  if(!locales.length){
+    cards.innerHTML='<div class="empty" style="background:#fff;border-radius:16px;padding:48px;width:100%">No hay partidos locales esta semana</div>';
+    $('tt-resumen').style.display='none';
+    return;
+  }
+  cards.innerHTML=locales.map(p=>{
+    const tt=calcTT(p);
+    return `<div class="tt-card">
+      <div class="tt-card-head">
+        <h3>${p.division} vs ${p.rival}</h3>
+        <p>⏰ ${p.hora}${p.cancha?' · '+p.cancha:''} · 🍕 TT: ${p.horaTT||'—'}</p>
+      </div>
+      <div class="tt-card-body">
+        <div class="tt-inputs">
+          <div class="tt-input-g"><label>Jug. local</label><input type="number" min="0" value="${p.jugadoresLocal||0}" onchange="actualizarTT('${p.id}','jugadoresLocal',this.value)"></div>
+          <div class="tt-input-g"><label>Jug. visit.</label><input type="number" min="0" value="${p.jugadoresVisitante||0}" onchange="actualizarTT('${p.id}','jugadoresVisitante',this.value)"></div>
+          <div class="tt-input-g"><label>Staff local</label><input type="number" min="0" value="${p.staffLocal||0}" onchange="actualizarTT('${p.id}','staffLocal',this.value)"></div>
+          <div class="tt-input-g"><label>Staff visit.</label><input type="number" min="0" value="${p.staffVisitante||0}" onchange="actualizarTT('${p.id}','staffVisitante',this.value)"></div>
+        </div>
+        <div class="tt-personas">
+          <span>${tt.personas}</span><p>personas en total</p>
+          <div style="display:flex;gap:16px;justify-content:center;margin-top:6px">
+            <span style="font-size:13px;color:var(--txs)">🏉 ${tt.jugadores} jugadores</span>
+            <span style="font-size:13px;color:var(--txs)">👔 ${tt.staff} staff</span>
+          </div>
+        </div>
+        <div class="tt-insumos">
+          <div class="tt-ins-item"><span class="emo">🍺</span><div class="info"><div class="nm">Cervezas</div><div class="cant">${tt.cervezas}</div></div></div>
+          <div class="tt-ins-item"><span class="emo">🥤</span><div class="info"><div class="nm">Gaseosas</div><div class="cant">${tt.gaseosas}</div></div></div>
+          <div class="tt-ins-item"><span class="emo">💧</span><div class="info"><div class="nm">Agua staff</div><div class="cant">${tt.aguas}</div></div></div>
+          <div class="tt-ins-item"><span class="emo">🌭</span><div class="info"><div class="nm">Choripanes</div><div class="cant">${tt.choripanes}</div></div></div>
+          <div class="tt-ins-item"><span class="emo">🍕</span><div class="info"><div class="nm">Pizzas</div><div class="cant">${tt.pizzas}</div></div></div>
+          <div class="tt-ins-item"><span class="emo">🥃</span><div class="info"><div class="nm">Vasos</div><div class="cant">${tt.vasos}</div></div></div>
+          <div class="tt-ins-item"><span class="emo">💧</span><div class="info"><div class="nm">Agua árbitro</div><div class="cant">${tt.aguaReferis}</div></div></div>
+        </div>
+        <div class="tt-hora-set">
+          <label>🍕 Hora TT:</label>
+          <input type="time" value="${p.horaTT||''}" onchange="actualizarTT('${p.id}','horaTT',this.value)" style="width:110px">
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Resumen totales
+  const tot={personas:0,cervezas:0,gaseosas:0,aguas:0,choripanes:0,pizzas:0,vasos:0,aguaReferis:0};
+  locales.forEach(p=>{ const tt=calcTT(p); Object.keys(tot).forEach(k=>tot[k]+=(tt[k]||0)); });
+  $('tt-resumen').style.display='block';
+  $('res-grid').innerHTML=[
+    ['🍺','Cervezas',tot.cervezas],['🥤','Gaseosas',tot.gaseosas],['💧','Agua staff',tot.aguas],
+    ['🌭','Choripanes',tot.choripanes],['🍕','Pizzas',tot.pizzas],['🥃','Vasos',tot.vasos],['💧','Agua árbitro',tot.aguaReferis]
+  ].map(([e,n,c])=>`<div class="res-item"><div class="emo">${e}</div><div class="cant">${c}</div><div class="nm">${n}</div></div>`).join('');
+}
+
+function calcTT(p){
+  const totalJug=(p.jugadoresLocal||0)+(p.jugadoresVisitante||0);
+  const totalStaff=(p.staffLocal||0)+(p.staffVisitante||0);
+  const totalPersonas=totalJug+totalStaff;
+  const tt=configTT;
+  return{
+    personas:totalPersonas,
+    jugadores:totalJug,
+    staff:totalStaff,
+    cervezas:Math.ceil(totalStaff*(tt.cerveza??1.5)),
+    gaseosas:Math.ceil(totalJug*(tt.gaseosa??0.5)),
+    aguas:tt.agua??4,
+    choripanes:Math.ceil(totalJug*(tt.chorip??1.2)),
+    pizzas:Math.ceil(totalStaff/(tt.pizza||3)),
+    vasos:Math.ceil(totalJug*(tt.vasos??3)),
+    aguaReferis:tt.aguaReferis??2
+  };
+}
+
+let ttTimer={};
+function actualizarTT(id,campo,val){
+  clearTimeout(ttTimer[id]);
+  ttTimer[id]=setTimeout(async()=>{
+    const upd={}; upd[campo]=campo==='horaTT'?val:parseInt(val)||0;
+    upd.actualizadoEn=new Date().toISOString();
+    try{ await db.collection('partidos').doc(id).update(upd); }catch(e){}
+  },800);
+}
+
+// ==================== RENDER AVISOS ====================
+function irAviso(id,el){
+  document.querySelectorAll('.aviso-panel').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('act'));
+  $(id).classList.add('open'); el.classList.add('act');
+  renderAvisos();
+}
+
+function renderAvisos(){
+  const locales=partidos.filter(p=>p.condicion==='local').sort((a,b)=>a.hora.localeCompare(b.hora));
+  const fechaStr=locales.length?fmtFechaLarga(locales[0].fecha):'el fin de semana';
+  $('avisos-semana-txt').textContent=`Semana del ${semanaId}`;
+
+  const resp=configApp.responsables||[];
+  const get=(tipo)=>resp.find(r=>r.tipo===tipo)||{};
+
+  const gerente=get('gerente'), canchero=get('canchero'), medico=get('medico'), ambulancia=get('ambulancia'), quincho=get('quincho'), club=get('club');
+
+  const mostrarST=(id,r)=>{ const el=$(id); if(el){ if(!r.tel&&r.nombre){ el.classList.add('vis'); } else { el.classList.remove('vis'); } }};
+  mostrarST('st-gerente',gerente); mostrarST('st-canchero',canchero); mostrarST('st-medico',medico); mostrarST('st-ambulancia',ambulancia); mostrarST('st-quincho',quincho); mostrarST('st-club',club);
+
+  if(!locales.length){
+    ['prev-gerente','prev-canchero','prev-medico','prev-ambulancia','prev-quincho','prev-club'].forEach(id=>{ const el=$(id); if(el) el.textContent='No hay partidos locales cargados para esta semana.'; });
+    return;
+  }
+
+  const fechas=[...new Set(locales.map(p=>p.fecha))];
+  const primFecha=fechaStr;
+  const primerHora=locales[0]?.hora||'09:00';
+  const hPrep=restarMins(primerHora,60);
+  const canchasUsadas=[...new Set(locales.map(p=>p.cancha).filter(Boolean))];
+  const ultHora=locales[locales.length-1]?.hora||'14:00';
+
+  // Totales TT
+  const totales={personas:0,cervezas:0,gaseosas:0,aguas:0,choripanes:0,pizzas:0,vasos:0,aguaReferis:0};
+  locales.forEach(p=>{ const tt=calcTT(p); Object.keys(totales).forEach(k=>totales[k]+=(tt[k]||0)); });
+
+  // Mensaje GERENTE
+  $('prev-gerente').textContent=
+`🏉 *RUGBY JUVENIL — JOCKEY CLUB SALTA*
+📅 ${primFecha}
+
+Buen día${gerente.nombre?' '+gerente.nombre:''}! Resumen de la jornada:
+
+📋 *PARTIDOS LOCALES (${locales.length}):*
+${locales.map(p=>`  • ${p.hora} hs | ${p.division} vs ${p.rival} → ${p.cancha||'S/C'} | ${estadoLabel(p.estado)}`).join('\n')}
+
+🏟️ *CANCHAS:* ${canchasUsadas.join(', ')||'A confirmar'}
+   Preparar desde las ${hPrep} hs
+
+👨‍⚕️ *MÉDICO:* ${medico.nombre||'⏳ A confirmar'}
+🚑 *AMBULANCIA:* ${primerHora} a ${ultHora} hs
+🍕 *TERCER TIEMPO:*
+${locales.map(p=>{ const tt=calcTT(p); return `  • ${p.horaTT||'—'} hs | ${p.division} vs ${p.rival} → ${tt.personas} personas`; }).join('\n')}
+
+📦 *INSUMOS TOTALES:*
+🍺 ${totales.cervezas} cervezas | 🥤 ${totales.gaseosas} gaseosas
+🌭 ${totales.choripanes} choripanes | 🍕 ${totales.pizzas} pizzas
+🥃 ${totales.vasos} vasos | 💧 ${totales.aguas} aguas staff
+
+¡Cualquier consulta me avisás!`;
+  $('prev-canchero').textContent=
+`🏉 *RUGBY JUVENIL — JOCKEY CLUB SALTA*
+${primFecha}
+
+Hola ${canchero.nombre||'(Canchero)'}! Te paso los partidos del fin de semana:
+
+${locales.map(p=>`🏟️ ${p.cancha||'S/C'} | ${p.hora} hs | ${p.division} vs ${p.rival}${p.estado!=='confirmado'?' ('+estadoLabel(p.estado)+')':''}`).join('\n')}
+
+📋 Canchas a preparar: ${canchasUsadas.join(', ')||'A definir'}
+⏰ Listas desde las ${hPrep} hs aprox.
+
+¡Muchas gracias! Cualquier consulta avisame.`;
+
+  // Mensaje MÉDICO
+  const hIni=restarMins(primerHora,30);
+  const hFin=sumarMins(ultHora,100);
+  $('prev-medico').textContent=
+`🏉 *RUGBY JUVENIL — JOCKEY CLUB SALTA*
+${primFecha}
+
+Hola${medico.nombre?' '+medico.nombre:''}! Necesito tu presencia para los partidos del fin de semana:
+
+⏰ Cobertura estimada: ${hIni} a ${hFin} hs
+
+Partidos:
+${locales.map(p=>`  • ${p.hora} hs | ${p.division} vs ${p.rival} (${p.cancha||'S/C'})`).join('\n')}
+
+¿Podés confirmar disponibilidad?
+¡Muchas gracias!`;
+
+  // Mensaje AMBULANCIA
+  $('prev-ambulancia').textContent=
+`Buenos días! Soy el coordinador de Rugby Juvenil del Jockey Club de Salta.
+
+Necesito ambulancia de guardia para:
+📅 ${primFecha}
+📍 Jockey Club de Salta
+⏰ Horario: ${primerHora} a ${ultHora} hs
+🏉 Evento: Partidos de rugby juvenil (${locales.map(p=>p.division).join(', ')})
+🏟️ Canchas: ${canchasUsadas.join(', ')||'A confirmar'}
+
+¿Pueden confirmar disponibilidad y presupuesto?
+¡Muchas gracias!`;
+
+  // Mensaje QUINCHO
+  const lineasQuincho=locales.map(p=>{
+    const tt=calcTT(p);
+    return `🕐 ${p.horaTT||'—'} hs | ${p.division} vs ${p.rival}
+   👥 ${tt.personas} personas
+   🍺 ${tt.cervezas} cervezas | 🥤 ${tt.gaseosas} gaseosas | 💧 ${tt.aguas} aguas staff | 💧 ${tt.aguaReferis} aguas árbitro
+   🌭 ${tt.choripanes} choripanes | 🍕 ${tt.pizzas} pizzas | 🥃 ${tt.vasos} vasos`;
+  });
+  const totales={personas:0,cervezas:0,gaseosas:0,aguas:0,choripanes:0,pizzas:0,vasos:0};
+  locales.forEach(p=>{ const tt=calcTT(p); Object.keys(totales).forEach(k=>totales[k]+=(tt[k]||0)); });
+  $('prev-quincho').textContent=
+`🏉 *RUGBY JUVENIL — JOCKEY CLUB SALTA*
+${primFecha}
+
+Hola${quincho.nombre?' '+quincho.nombre:''}! Te paso la info para coordinar los tercer tiempos:
+
+${lineasQuincho.join('\n\n')}
+
+📦 *TOTALES JORNADA:*
+🍺 ${totales.cervezas} cervezas
+🥤 ${totales.gaseosas} gaseosas
+💧 ${totales.aguas} aguas
+🌭 ${totales.choripanes} choripanes
+🍕 ${totales.pizzas} pizzas
+🥃 ${totales.vasos} vasos descartables
+💧 ${configTT.aguaReferis??2} aguas para árbitro (por partido)
+
+¡Cualquier consulta me avisás!`;
+
+  // Mensaje CLUB
+  $('prev-club').textContent=
+`🏉 *RUGBY JUVENIL — JOCKEY CLUB SALTA*
+${primFecha}
+
+Buenos días! Les paso la info para el fin de semana:
+
+🏟️ CANCHAS A PREPARAR:
+${canchasUsadas.map(c=>{
+    const hs=locales.filter(p=>p.cancha===c);
+    return `  • ${c}: desde las ${restarMins(hs[0]?.hora||'09:00',60)} hs`;
+  }).join('\n')||'  • A definir'}
+
+📋 PARTIDOS LOCALES:
+${locales.map(p=>`  • ${p.hora} hs | ${p.division} vs ${p.rival} → ${p.cancha||'S/C'} | ${estadoLabel(p.estado)}`).join('\n')}
+
+Médico: ${medico.nombre?'✅ '+medico.nombre:'⏳ A confirmar'}
+Ambulancia: ⏳ A confirmar
+Total partidos locales: ${locales.length}
+
+¡Gracias! Ante dudas me escriben.`;
+}
+
+function enviarWA(tipo){
+  const resp=(configApp.responsables||[]).find(r=>r.tipo===tipo)||{};
+  const prevId='prev-'+tipo;
+  const msg=$(prevId).textContent;
+  if(resp.tel){
+    window.open('https://wa.me/'+resp.tel+'?text='+encodeURIComponent(msg),'_blank');
+  } else {
+    alert('No hay número de WhatsApp configurado para este responsable.\nEl mensaje fue copiado al portapapeles.');
+    navigator.clipboard.writeText(msg).catch(()=>{});
+  }
+}
+function copiarMensaje(id){ navigator.clipboard.writeText($(id).textContent).then(()=>{const b=event.target; const t=b.textContent; b.textContent='✅ Copiado!'; setTimeout(()=>b.textContent=t,2000);}); }
+
+// ==================== USUARIOS ====================
+function cargarUsuarios(){
+  if(userData.rol!=='admin') return;
+  usuariosSub=db.collection('usuarios').onSnapshot(snap=>{
+    const users=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const ul=$('user-list'); ul.innerHTML='';
+    users.forEach(u=>{
+      const ini=(u.nombre||'?').charAt(0).toUpperCase();
+      ul.innerHTML+=`<div class="user-item">
+        <div class="user-avatar">${ini}</div>
+        <div class="user-info"><strong>${u.nombre}</strong><span>${u.email}</span></div>
+        <span class="rol-badge ${u.rol==='admin'?'rb-admin':'rb-colab'}">${u.rol==='admin'?'ADMIN':'COLABORADOR'}</span>
+      </div>`;
+    });
+  });
+}
+function abrirModalUsuario(){ $('u-nom').value=''; $('u-email').value=''; $('u-pass').value='Rugby2025'; $('u-err').textContent=''; setRolUsuario('colaborador'); $('ov-usuario').classList.add('open'); }
+function setRolUsuario(rol){ $('u-rol').value=rol; $('bu-admin').className='btn-tog'+(rol==='admin'?' sel-confirm':''); $('bu-colab').className='btn-tog'+(rol==='colaborador'?' sel-confirm':''); }
+async function registrarUsuario(){
+  const nom=$('u-nom').value.trim(), email=$('u-email').value.trim(), pass=$('u-pass').value, rol=$('u-rol').value;
+  if(!nom||!email||!pass){ $('u-err').textContent='Completá todos los campos'; return; }
+  loading(true);
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pass);
+    await db.collection('usuarios').doc(cred.user.uid).set({nombre:nom,email,rol,creadoEn:new Date().toISOString()});
+    await auth.signInWithEmailAndPassword(userData.email,'');
+  }catch(e){
+    if(e.code!=='auth/wrong-password'){
+      try{ $('u-err').textContent=''; }catch(_){}
+    }
+  }
+  loading(false);
+  cerrarModal('ov-usuario');
+  alert('✅ Usuario creado. Que inicie sesión con: '+email+' / '+pass);
+}
+
+// ==================== IMPORTADOR IA ====================
+function abrirIA(){
+  $('ia-texto').value=''; $('ia-paso1').style.display='block'; $('ia-paso2').style.display='none'; $('ia-paso3').style.display='none';
+  $('btn-ia-procesar').style.display='inline-flex'; $('btn-ia-importar').style.display='none';
+  $('ia-no-key').style.display='none';
+  $('ia-st1').className='ia-step act'; $('ia-st2').className='ia-step'; $('ia-st3').className='ia-step';
+  // Fecha de referencia: próximo sábado
+  const hoy=new Date(); const day=hoy.getDay(); const diff=day<=6?6-day:0;
+  hoy.setDate(hoy.getDate()+diff);
+  $('ia-fecha-ref').value=hoy.toISOString().split('T')[0];
+  $('ov-ia').classList.add('open');
+}
+
+async function procesarIA(){
+  const texto=$('ia-texto').value.trim();
+  if(!texto){ alert('Pegá el texto del cronograma primero'); return; }
+  const apiKey=localStorage.getItem('anthropic_key')||'';
+  if(!apiKey){ $('ia-no-key').style.display='block'; return; }
+  $('ia-no-key').style.display='none';
+  const fechaRef=$('ia-fecha-ref').value;
+
+  $('ia-paso1').style.display='none'; $('ia-paso2').style.display='block';
+  $('ia-st1').className='ia-step done'; $('ia-st2').className='ia-step act';
+  $('btn-ia-procesar').style.display='none';
+
+  const prompt=`Sos un asistente que extrae información de partidos de rugby de un cronograma.
+El equipo local del Jockey Club de Salta se identifica como: "Jockey", "JCS", "Jockey Club", "Jockey Salta" o similar.
+Fecha de referencia del fin de semana: ${fechaRef}. Usá esta fecha para el sábado, y ${addDays(fechaRef,1)} para el domingo.
+Si el texto dice "sábado" asigná ${fechaRef}, si dice "domingo" asigná ${addDays(fechaRef,1)}.
+
+Del siguiente cronograma, extraé TODOS los partidos con:
+- division: (M15, M16, M17, M19, Infantiles, Pre-Intermedia, Plantel Superior, u otra que aparezca)
+- rival: el equipo contrario al Jockey Club
+- fecha: YYYY-MM-DD
+- hora: HH:MM (24hs)
+- cancha: nombre de la cancha (si no se especifica, dejá "")
+- condicion: "local" (si Jockey es local/hace de anfitrión) o "visita" (si juega de visitante)
+
+Respondé SOLO con JSON válido (sin backticks, sin explicación):
+{"partidos":[{"division":"","rival":"","fecha":"","hora":"","cancha":"","condicion":""}]}
+
+CRONOGRAMA:
+${texto}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    if(data.error){ throw new Error(data.error.message); }
+    const txt=data.content[0].text.trim().replace(/```json?/g,'').replace(/```/g,'').trim();
+    const parsed=JSON.parse(txt);
+    iaPartidosDetectados=parsed.partidos||[];
+    renderIAResultados();
+  }catch(e){
+    $('ia-paso2').style.display='none'; $('ia-paso1').style.display='block';
+    $('ia-st2').className='ia-step'; $('ia-st1').className='ia-step act';
+    $('btn-ia-procesar').style.display='inline-flex';
+    $('ia-no-key').style.display='block';
+    $('ia-no-key').textContent='❌ Error al procesar: '+e.message;
+  }
+}
+
+function addDays(dateStr,n){
+  const d=new Date(dateStr+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0];
+}
+
+function renderIAResultados(){
+  $('ia-paso2').style.display='none'; $('ia-paso3').style.display='block';
+  $('ia-st2').className='ia-step done'; $('ia-st3').className='ia-step act';
+  $('btn-ia-importar').style.display='inline-flex';
+  const list=$('ia-result-list');
+  if(!iaPartidosDetectados.length){
+    list.innerHTML='<div class="ia-error">No se detectaron partidos. Revisá el texto pegado.</div>';
+    return;
+  }
+  list.innerHTML=iaPartidosDetectados.map((p,i)=>`
+    <div class="ia-partido">
+      <input type="checkbox" id="ia-chk-${i}" checked>
+      <div class="ia-info">
+        <strong>${p.division} — ${p.rival}</strong>
+        <span>📅 ${fmtFechaLarga(p.fecha)} · ⏰ ${p.hora} · ${p.cancha||'Sin cancha'} · <span class="badge ${p.condicion==='local'?'b-local':'b-visit'}" style="font-size:11px">${p.condicion==='local'?'🏠 Local':'✈️ Visitante'}</span></span>
+      </div>
+    </div>`).join('');
+}
+
+async function importarPartidos(){
+  const seleccionados=iaPartidosDetectados.filter((_,i)=>$('ia-chk-'+i)?.checked);
+  if(!seleccionados.length){ alert('Seleccioná al menos un partido'); return; }
+  loading(true);
+  try{
+    const batch=db.batch();
+    seleccionados.forEach(p=>{
+      const ref=db.collection('partidos').doc();
+      batch.set(ref,{
+        semanaId, division:p.division, rival:p.rival, fecha:p.fecha, hora:p.hora,
+        cancha:p.cancha||'', condicion:p.condicion, estado:'pendiente',
+        jugadoresLocal:0,jugadoresVisitante:0,staffLocal:0,staffVisitante:0,referis:0,
+        horaTT:calcHoraTT(p.hora),notasTT:'',
+        creadoEn:new Date().toISOString(),actualizadoEn:new Date().toISOString()
+      });
+    });
+    await batch.commit();
+    cerrarModal('ov-ia');
+  }catch(e){ loading(false); alert('Error al importar: '+e.message); }
+}
+
+// ==================== MÓDULOS NAV ====================
+function irMod(id,el){
+  document.querySelectorAll('.modulo').forEach(m=>m.classList.remove('open'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('act'));
+  $(id).classList.add('open'); el.classList.add('act');
+  if(id==='m-avisos') renderAvisos();
+  if(id==='m-tercer') renderTercerTiempo();
+  if(id==='m-canchas') renderCanchas();
+}
+
+// ==================== CONTRASEÑA ====================
+function abrirPass(){ $('pass-actual').value=''; $('pass-nueva').value=''; $('pass-conf').value=''; $('pass-err').textContent=''; $('pass-ok').style.display='none'; $('ov-pass').classList.add('open'); }
+async function cambiarContrasena(){
+  const act=$('pass-actual').value, nueva=$('pass-nueva').value, conf=$('pass-conf').value;
+  if(!act||!nueva||!conf){ $('pass-err').textContent='Completá todos los campos'; return; }
+  if(nueva.length<6){ $('pass-err').textContent='Mínimo 6 caracteres'; return; }
+  if(nueva!==conf){ $('pass-err').textContent='Las contraseñas no coinciden'; return; }
+  try{
+    const cred=firebase.auth.EmailAuthProvider.credential(auth.currentUser.email,act);
+    await auth.currentUser.reauthenticateWithCredential(cred);
+    await auth.currentUser.updatePassword(nueva);
+    $('pass-ok').style.display='block'; $('pass-err').textContent='';
+    setTimeout(()=>cerrarModal('ov-pass'),2000);
+  }catch(e){ $('pass-err').textContent=tradErr(e.code); }
+}
+
+// ==================== UTILIDADES FECHA/HORA ====================
+function fmtFechaLarga(iso){
+  if(!iso) return '—';
+  const d=new Date(iso+'T12:00:00');
+  const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return dias[d.getDay()]+' '+d.getDate()+' de '+meses[d.getMonth()];
+}
+function fmtFechaCorta(d){
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return d.getDate()+' '+meses[d.getMonth()];
+}
+function restarMins(hora,n){
+  const [h,m]=hora.split(':').map(Number);
+  const total=h*60+m-n;
+  const t=total<0?0:total;
+  return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+}
+function sumarMins(hora,n){
+  const [h,m]=hora.split(':').map(Number);
+  const total=h*60+m+n;
+  return String(Math.floor(total/60)%24).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+}
+</script>
+</body>
+</html>

@@ -1568,8 +1568,8 @@ Necesito ambulancia de guardia para:
    🍺 ${tt.cervezas} cervezas | 🥤 ${tt.gaseosas} gaseosas | 💧 ${tt.aguas} aguas staff | 💧 ${tt.aguaReferis} aguas árbitro
    🌭 ${tt.choripanes} choripanes | 🍕 ${tt.pizzas} pizzas | 🥃 ${tt.vasos} vasos`;
   });
-  const totales={personas:0,cervezas:0,gaseosas:0,aguas:0,choripanes:0,pizzas:0,vasos:0};
-  locales.forEach(p=>{ const tt=calcTT(p); Object.keys(totales).forEach(k=>totales[k]+=(tt[k]||0)); });
+  const totalesQ={personas:0,cervezas:0,gaseosas:0,aguas:0,choripanes:0,pizzas:0,vasos:0};
+  locales.forEach(p=>{ const tt=calcTT(p); Object.keys(totalesQ).forEach(k=>totalesQ[k]+=(tt[k]||0)); });
   $('prev-quincho').textContent=
 `🏉 *RUGBY JUVENIL — JOCKEY CLUB SALTA*
 ${primFecha}
@@ -1579,12 +1579,12 @@ Hola${quincho.nombre?' '+quincho.nombre:''}! Te paso la info para coordinar los 
 ${lineasQuincho.join('\n\n')}
 
 📦 *TOTALES JORNADA:*
-🍺 ${totales.cervezas} cervezas
-🥤 ${totales.gaseosas} gaseosas
-💧 ${totales.aguas} aguas
-🌭 ${totales.choripanes} choripanes
-🍕 ${totales.pizzas} pizzas
-🥃 ${totales.vasos} vasos descartables
+🍺 ${totalesQ.cervezas} cervezas
+🥤 ${totalesQ.gaseosas} gaseosas
+💧 ${totalesQ.aguas} aguas
+🌭 ${totalesQ.choripanes} choripanes
+🍕 ${totalesQ.pizzas} pizzas
+🥃 ${totalesQ.vasos} vasos descartables
 💧 ${configTT.aguaReferis??2} aguas para árbitro (por partido)
 
 ¡Cualquier consulta me avisás!`;

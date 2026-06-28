@@ -873,22 +873,40 @@ function cerrarModal(id){ $(id).classList.remove('open'); }
 
 // ==================== FIREBASE INIT ====================
 function initFB(cfg){
-  if(!firebase.apps.length) firebase.initializeApp(cfg);
-  db   = firebase.firestore();
-  auth = firebase.auth();
-  authSub = auth.onAuthStateChanged(async user=>{
-    if(appIniciada) return;
-    if(user){
-      await cargarUsuarioActual(user);
-      loading(false);
-      iniciarApp();
-    } else {
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    db   = firebase.firestore();
+    auth = firebase.auth();
+    authSub = auth.onAuthStateChanged(async user=>{
+      if(appIniciada) return;
+      if(user){
+        await cargarUsuarioActual(user);
+        loading(false);
+        iniciarApp();
+      } else {
+        loading(false);
+        pantalla('s-login');
+      }
+    });
+  }catch(e){
+    console.error('Firebase init error:',e);
+    loading(false);
+    pantalla('s-login');
+  }
+}
+window.addEventListener('load',()=>{
+  loading(true);
+  // Fallback: si en 8 segundos no cargó nada, mostrar login
+  setTimeout(()=>{
+    if(!document.getElementById('s-login').classList.contains('open') && 
+       !document.getElementById('s-app').classList.contains('open')){
       loading(false);
       pantalla('s-login');
     }
-  });
-}
-window.addEventListener('load',()=>{ loading(true); initFB(APP_CONFIG); });
+  }, 8000);
+  try{ initFB(APP_CONFIG); }
+  catch(e){ loading(false); pantalla('s-login'); }
+});
 
 // ==================== AUTH ====================
 async function cargarUsuarioActual(user){
